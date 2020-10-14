@@ -74,6 +74,7 @@ static int check_file_permissions(const char *pkgname, const char *filepath,
 {
 	int errors = 0;
 	mode_t fsmode;
+	mode_t compare;
 
 	/* uid */
 	if(st->st_uid != archive_entry_uid(entry)) {
@@ -95,11 +96,14 @@ static int check_file_permissions(const char *pkgname, const char *filepath,
 
 	/* mode */
 	fsmode = st->st_mode & (S_ISUID | S_ISGID | S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO);
-	if(fsmode != (~AE_IFMT & archive_entry_mode(entry))) {
+	compare = (~AE_IFMT & archive_entry_mode(entry));
+
+	if(fsmode != compare) {
 		errors++;
 		if(!config->quiet) {
-			pm_printf(ALPM_LOG_WARNING, _("%s: %s (Permissions mismatch)\n"),
+			pm_printf(ALPM_LOG_WARNING, _("Fixing %s: %s (Permissions mismatch)\n"),
 					pkgname, filepath);
+			chmod(filepath, compare);
 		}
 	}
 
